@@ -1,3 +1,5 @@
 let targetNumbers: [Int] = generateThreeRandomNumbers()
 
-runNumberBaseballGame()
+//runNumberBaseballGame()
+
+print(isValid(["1", "2", "3"]))
