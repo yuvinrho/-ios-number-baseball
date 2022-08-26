@@ -1,73 +1,10 @@
-import Foundation
-
-enum GameResult: String {
-    case userWin = "사용자 승리!"
-    case computerWin = "컴퓨터 승리!"
-    case gameReplay
+enum GameResult {
+    case userWin
+    case computerWin
+    case notYet
 }
 
-func inputMenu() -> String? {
-    printMenuList()
-    
-    return readLine()
-}
-
-func handleMenuSelectionError() {
-    print("입력이 잘못되었습니다.")
-    runGame()
-}
-
-func runGame() {
-    let menuSelection = inputMenu()
-    var Game
-    
-    switch menuSelection {
-    case "1":
-        startGame()
-    case "2":
-        return
-    default:
-        handleMenuSelectionError()
-    }
-}
-
-func startGame() {
-    
-}
-
-
-func inputThreeGameNumbers() -> [Int]? {
-    let userInput = readLine()?.components(separatedBy: " ")
-    return userInput?.compactMap { Int($0) }
-}
-
-func runNumberBaseballGame(leftTryCount: Int) {
-    var gameResult: GameResult
-    guard let menuNumber = readLine() else { return }
-    
-    switch menuNumber {
-    case "1":
-        GameResult = startGame(leftTryCount: <#T##Int#>)
-    case "2":
-        return
-    default:
-        print("입력이 잘못되었습니다.")
-        return runNumberBaseballGame()
-    }
-    
-    switch gameResult {
-    case .UserWin:
-        return
-    case .ComputerWin:
-        return
-    case .GameReplay:
-        startGame(leftTryCount: letTryCount - 1)
-    }
-}
-
-
-
-func printMenuList() {
+func displayMenuList() {
     print("""
           1. 게임시작
           2. 게임종료
@@ -76,88 +13,43 @@ func printMenuList() {
           terminator: " ")
 }
 
-func manageNumberBaseballGame() {
-    for leftTryCount in (0..<9).reversed() {
-        let userNumbers: [Int] = inputThreeNumbers()
-        if isThreeStrike(in: userNumbers) {
-            print("사용자 승리!")
-            break
-        }
-        
-        print(leftTryCount != 0 ? "남은 기회: \(leftTryCount)" : "컴퓨터 승리...!")
-    }
+func inputMenu() -> String? {
+    displayMenuList()
+    
+    return readLine()
 }
 
-func startGame(leftTryCount: Int) -> GameResult {
-    let userNumbers: [Int] = inputThreeNumbers()
-    
-    if leftTryCount == 0 {
-        print("컴퓨터 승리...!")
-        return GameResult.ComputerWin
-    }
-    
-    if isThreeStrike(in: userNumbers) {
-        print("사용자 승리!")
-        return GameResult.UserWin
-    }
-    
-    print("남은 기회: \(leftTryCount)")
-    return GameResult.GameReplay
+func handleMenuSelectionError() {
+    print("입력이 잘못되었습니다.")
+    displayMeneInterface()
 }
 
-func inputThreeNumbers() -> [Int] {
-    while true {
-        printNumberInputRule()
-        guard let threeNumbers = getThreeNumbers(from: readLine()) else {
-            print("입력이 잘못되었습니다.")
-            continue
-        }
-    
-        return threeNumbers
-    }
+
+func generateThreeRandomNumbers() -> [Int] {
+    return Array((1...9).shuffled()[0..<3])
 }
 
-func printNumberInputRule() {
+func displayInputThreeNumbers() {
     print("""
-           숫자 3개를 띄어쓰기로 구분하여 입력해주세요.
-           중복 숫자는 허용하지 않습니다.
-           입력 :
-           """, terminator: " ")
+          숫자 3개를 띄어쓰기로 구분하여 입력해주세요.
+          중복 숫자는 허용하지 않습니다.
+          입력 :
+          """,
+          terminator: " "
+    )
 }
 
-func getThreeNumbers(from userInput: String?) -> [Int]? {
-    if isValidThreeNumbers(from: userInput) {
-        return userInput?.split(separator: " ").compactMap { Int($0) }
-    }
+func inputThreeGameNumbers() -> [Int] {
+    displayInputThreeNumbers()
     
-    return nil
+    guard let threeNumbers = readLine()?.split(separator: " ").compactMap({ Int($0) }),
+              Set(threeNumbers).count == 3,
+              threeNumbers.contains(0) == false else { return inputThreeGameNumbers() }
+    
+    return threeNumbers
 }
 
-func isValidThreeNumbers(from userInput: String?) -> Bool {
-    guard let userInput = userInput else {
-        return false
-    }
-    
-    let threeNumbers = userInput.split(separator: " ").compactMap { Int($0) }
-    
-    if threeNumbers.count != 3 {
-        return false
-    }
-    
-    return true
-}
-
-func isThreeStrike(in userNumber : [Int]) -> Bool {
-    let strike: Int = countStrikeOrBall(with: userNumber).strike
-    
-    if strike == 3 {
-        return true
-    }
-    
-    return false
-}
-
-func countStrikeOrBall(with myNumbers: [Int]) -> (strike: Int, ball: Int) {
+func countStrikeAndBall(in myNumbers: [Int], and targetNumbers: [Int]) -> (strike: Int, ball: Int) {
     var (strike, ball) = (0, 0)
 
     for (number, myNumber) in zip(targetNumbers, myNumbers) {
@@ -172,6 +64,51 @@ func countStrikeOrBall(with myNumbers: [Int]) -> (strike: Int, ball: Int) {
     return (strike, ball)
 }
 
-func generateThreeRandomNumbers() -> [Int] {
-    return Array((1...9).shuffled()[0..<3])
+func displayGameResult(_ result: GameResult) {
+    switch result {
+    case .userWin:
+        print("사용자 승리!")
+        return
+    case .computerWin:
+        print("컴퓨터 승리!")
+        return
+    case .notYet:
+        return
+    }
+}
+
+func startGame(targetNumbers: [Int]) {
+    var gameResult: GameResult = .notYet
+    
+    for leftTryCount in (0..<9).reversed() {
+        let userNumbers: [Int] = inputThreeGameNumbers()
+        let strikeAndBall = countStrikeAndBall(in: userNumbers, and: targetNumbers)
+        
+        if strikeAndBall.strike == 3 {
+            gameResult = .userWin
+            break
+        }
+        
+        print("남은 기회: \(leftTryCount)")
+        
+        if leftTryCount == 0 {
+            gameResult = .computerWin
+            break
+        }
+    }
+    
+    displayGameResult(gameResult)
+}
+
+func displayMeneInterface() {
+    let menuSelection: String? = inputMenu()
+    
+    switch menuSelection {
+    case "1":
+        startGame(targetNumbers: generateThreeRandomNumbers())
+    case "2":
+        return
+    default:
+        handleMenuSelectionError()
+    }
 }
